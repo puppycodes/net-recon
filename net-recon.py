@@ -172,8 +172,12 @@ class LLDP:
 
                 if packet.getlayer(Ether) and packet[Ether].dst == "01:80:c2:00:00:0e":
                     mac = packet[Ether].src
-                    raw_packet = list(str(packet[Raw]))
-                    hostname = ''.join(raw_packet[53:]).rsplit('\x0c')[0].strip()
+                    raw_packet = list(str(packet[Raw])) # Load LLDP header
+
+                    system_name_start = raw_packet.index('\x0a')
+                    system_name_list = raw_packet[(system_name_start + 2):]
+                    system_name = ''.join(system_name_list).rsplit('\x0c')[0]
+                    hostname = system_name
                     system_description = ''.join(raw_packet[71:]).rsplit('\x0e')[0].strip()
                     mgt_addr_split = list(raw_packet[131:135])
                     mgt_addr_list = []
@@ -185,7 +189,7 @@ class LLDP:
                     mgt_ipv4 = '.'.join(mgt_addr_list)
 
                     if hostname not in self.keys['hosts'].keys():
-                        self.keys['hosts'].update({hostname:{'mac': mac, 'fingerprints': system_description, 'management_ipv4': mgt_ipv4, 'protocol': 'LLDP'}})
+                        self.keys['hosts'].update({hostname:{'mac': mac, 'fingerprints': system_description, 'management_ipv4': mgt_ipv4, 'system_name': system_name, 'protocol': 'LLDP'}})
 
 
         return self.keys
@@ -315,7 +319,7 @@ def create_report(rname, rkeys, quiet=False):
     for host in hosts:
 
         if not quiet:
-            print host.upper()
+            print 'Host: {}'.format(host.upper())
 
         hostlist.append(host)
 
@@ -361,21 +365,20 @@ def main():
         lldp_info = LLDP(pcap_buf, recon_keys).search()
 
         print '  - Searching for DHCP information...'
-        dhcp_info = BootStrap(pcap_buf, recon_keys).search()
+#        dhcp_info = BootStrap(pcap_buf, recon_keys).search()
 
         print '  - Searching for MDNS information...'
-        mdns_info = MDNS(pcap_buf, recon_keys).search()
+#        mdns_info = MDNS(pcap_buf, recon_keys).search()
 
         print '  - Searching for Windows Browser information...'
-        win_browse_info = WinBrowser(pcap_buf, recon_keys).search()
+#        win_browse_info = WinBrowser(pcap_buf, recon_keys).search()
 
 
         if report:
-            create_report(report, win_browse_info, quiet=quiet)
+#            create_report(report, win_browse_info, quiet=quiet)
+            create_report(report, lldp_info, quiet=quiet)
 
 if __name__ == '__main__':
 
     banner()
     main()
-
-
