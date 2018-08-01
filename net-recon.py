@@ -184,18 +184,14 @@ class LLDP:
                     address = 'Unknown'
 
                     # Get Chassis ID
-                    chassis_id_bytes = raw_packet[3:9]
-
-                    odd_chars = list(str(hex(int(''.join(chassis_id_bytes).encode('hex'), 16))).replace('x','').strip())[0::2]
-                    even_chars = list(str(hex(int(''.join(chassis_id_bytes).encode('hex'), 16))).replace('x','').strip())[1::2]
-
                     chassis_id = ''
+                    chassis_id_bytes = list(str(packet))[17:23]
 
-                    for odd, even in zip(odd_chars, even_chars):
-                        chassis_id_obj = '{}{}'.format(odd, even)
-                        chassis_id += '{}:'.format(chassis_id_obj)
+                    for chassis_obj in chassis_id_bytes:
+                        chassis_byte = str(chassis_obj.encode('hex'))
+                        chassis_id += '{}:'.format(str(chassis_obj.encode('hex')))
 
-                    chassis_id = chassis_id.rstrip(':')
+                    chassis_id_mac = chassis_id.rstrip(':')
 
                     # Get LLDP System Name
                     if '\x0a' in raw_packet:
@@ -266,7 +262,7 @@ class LLDP:
 
 
                     if hostname not in self.keys['hosts'].keys():
-                        self.keys['hosts'].update({hostname:{'mac': mac, 'mgt_address_type': mgt_address_type, 'chassis_id': chassis_id, 'fingerprints': system_description, 'management_ipv4': mgt_ipv4, 'system_name': system_name, 'tr-41-location-id': address, 'protocol': 'LLDP'}})
+                        self.keys['hosts'].update({hostname:{'mac': mac, 'mgt_address_type': mgt_address_type, 'chassis_id': chassis_id_mac, 'fingerprints': system_description, 'management_ipv4': mgt_ipv4, 'system_name': system_name, 'tr-41-location-id': address, 'protocol': 'LLDP'}})
 
         return self.keys
 
