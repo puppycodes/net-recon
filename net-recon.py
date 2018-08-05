@@ -207,7 +207,7 @@ class LLDP:
 
                         system_description_start = raw_packet.index('\x0c')
                         system_description_list = raw_packet[(system_description_start + 2):]
-                        system_description = ''.join(system_description_list).rsplit('\x0e')[0]
+                        system_description = ''.join(system_description_list).rsplit('\x0e')[0].rsplit('\x08')[0]
 
                     if '\x0e' in raw_packet:
                     # Get LLDP Management Address
@@ -228,8 +228,10 @@ class LLDP:
 
                         if mgt_addr_type == '\x01':
                             mgt_address_type = 'IPv4'
+                            mgt_addr_start = raw_packet[(mgt_addr_type_index + 4):(mgt_addr_type_index + 8)]
                             mgt_addr_list = []
-                            mgt_addr_start = list(''.join(system_description_list).rsplit('\x0e')[1].split()[1][2:])[0:4]
+#                            mgt_addr_start = list(''.join(system_description_list).rsplit('\x0e')[1].split()[1][2:])[0:4]
+
 
                             for mgt in mgt_addr_start:
                                 octet = int(mgt.encode('hex'), 16)
@@ -437,18 +439,17 @@ def main():
         lldp_info = LLDP(pcap_buf, recon_keys).search()
 
         print '  - Searching for DHCP information...'
-#        dhcp_info = BootStrap(pcap_buf, recon_keys).search()
+        dhcp_info = BootStrap(pcap_buf, recon_keys).search()
 
         print '  - Searching for MDNS information...'
-#        mdns_info = MDNS(pcap_buf, recon_keys).search()
+        mdns_info = MDNS(pcap_buf, recon_keys).search()
 
         print '  - Searching for Windows Browser information...'
-#        win_browse_info = WinBrowser(pcap_buf, recon_keys).search()
+        win_browse_info = WinBrowser(pcap_buf, recon_keys).search()
 
 
         if report:
-#            create_report(report, win_browse_info, quiet=quiet)
-            create_report(report, lldp_info, quiet=quiet)
+            create_report(report, win_browse_info, quiet=quiet)
 
 if __name__ == '__main__':
 
