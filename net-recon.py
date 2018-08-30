@@ -33,13 +33,24 @@
 import sys
 import os
 import glob
-import subprocess
-import time
+import random
+
+from modules.winbrowser import *
+from modules.lldp import *
+from modules.cdp import *
+from modules.mdns import *
+from modules.dhcp import *
 
 from scapy.all import *
 from scapy.utils import *
 
 from argparse import ArgumentParser
+
+class NetRecon:
+
+    def __init__(self):
+
+        pass
 
 def banner():
 
@@ -47,306 +58,6 @@ def banner():
         print bfile.read().strip()
 
     print ''
-
-class MDNS:
-
-    def __init__(self, data, keys):
-
-        self.data = data
-        self.keys = keys
-
-    def search(self):
-
-        sessions = self.data.sessions()
-
-
-        for session in sessions:
-
-            for packet in sessions[session]:
-
-                if packet.getlayer(UDP) and packet.getlayer(IP) and packet[UDP].sport == 5353 and packet[UDP].dport == 5353 and packet[IP].dst == '224.0.0.251':
-                    raw_packet = str(packet[DNS]).replace('\r','\t').split('\t')
-                    try:
-                        domain = raw_packet[1].split()[0].replace('\x05','.').replace('\x04','.').split('\x00')[0].strip()
-
-                    except IndexError:
-                        domain = None
-
-                    if domain != None and domain not in self.keys['domains'].keys():
-                        self.keys['domains'].update({domain: {'protocol': 'mdns', 'client_ipv4': packet[IP].src}})
-
-        return self.keys
-
-class WinBrowser:
-
-    def __init__(self, data, keys):
-
-        self.data = data
-        self.keys = keys
-
-    def search(self):
-
-        sessions = self.data.sessions()
-
-        for session in sessions:
-
-            for packet in sessions[session]:
-
-                if packet.getlayer(UDP) and packet[UDP].sport == 138 and packet[UDP].dport == 138:
-                    raw_packet = list(str(packet[Raw]))
-                    browser_cmd = raw_packet[85:87]
-
-                    if browser_cmd[1] == '\x01':
-
-                        announcement = 'Host Announcement (0x01)'
-                        mac = packet[Ether].src
-                        ipv4 = packet[IP].src
-                        hostname = ''.join(raw_packet[92:]).rsplit('\x00')[0].strip()
-
-                        if list(raw_packet[108:110])[0] == '\x06' and list(raw_packet[108:110])[1] == '\x01':
-                            os = 'Windows 7 / Windows Server 2008 R2 (Windows 6.1)'
-
-                        else:
-                            os = None
-
-                        if hostname not in self.keys['hosts'].keys():
-                            self.keys['hosts'].update({hostname:{'announcement': announcement, 'mac': mac, 'ipv4': ipv4, 'os': os, 'protocol': 'Windows Browser Protocol'}})
-
-                        else:
-
-                            if 'os' not in self.keys['hosts'][hostname].keys():
-                                self.keys['hosts'][hostname].update({'os':os})
-
-                    elif browser_cmd[1] == '\x0c':
-
-                        announcement = 'Domain/Workgroup Announcement (0x0c)'
-                        mac = packet[Ether].src
-                        ipv4 = packet[IP].src
-                        domain = ''.join(raw_packet[92:]).rsplit('\x00')[0].strip()
-                        hostname = ''.join(raw_packet[118:]).rstrip('\x00')
-
-                        if hostname not in self.keys['hosts'].keys():
-                            self.keys['hosts'].update({hostname:{'announcement': announcement, 'mac': mac, 'ipv4': ipv4, 'domain': domain, 'protocol': 'Windows Browser Protocol'}})
-
-                        else:
-                            if 'domain' not in self.keys['hosts'][hostname].keys():
-                                self.keys['hosts'][hostname].update({'domain': domain})
-
-                        if domain not in self.keys['domains'].keys():
-                            self.keys['domains'].update({domain:{'protocol': 'Windows Browser Protocol'}})
-
-
-                    elif browser_cmd[1] == '\x0f':
-
-                        announcement = 'Local Master Announcement (0x0f)'
-                        mac = packet[Ether].src
-                        ipv4 = packet[IP].src
-                        hostname = ''.join(raw_packet[92:]).rsplit('\x00')[0].strip()
-                        comment = None
-                        if raw_packet[118:] != ['\x00']:
-                            comment = ''.join(raw_packet[118:]).strip()
-
-                        if hostname not in self.keys['hosts'].keys():
-                            self.keys['hosts'].update({hostname:{'announcement': announcement, 'mac': mac, 'ipv4': ipv4, 'comment': comment, 'protocol': 'Windows Browser Protocol'}})
-
-                        else:
-                            if comment not in self.keys['hosts'][hostname].keys():
-                                self.keys['hosts'][hostname].update({'comment': comment})
-
-        return self.keys
-
-class LLDP:
-
-    def __init__(self, data, keys):
-
-        self.data = data
-        self.keys = keys
-
-    def search(self):
-
-        sessions = self.data.sessions()
-
-        for session in sessions:
-
-            for packet in sessions[session]:
-
-                if packet.getlayer(Ether) and packet[Ether].dst == "01:80:c2:00:00:0e":
-                    # Get source MAC and build list of bytes from packet
-                    mac = packet[Ether].src
-                    raw_packet = list(str(packet[Raw]))
-
-                    hostname = 'LLDP-Host-{}'.format(mac)
-                    system_name = hostname
-                    system_description = 'LLDP Advertiser'
-                    mgt_ipv4 = 'Unknown'
-                    mgt_802 = 'Unknown'
-                    mgt_address_type = 'Unknown'
-                    address = 'Unknown'
-
-                    # Get Chassis ID
-                    chassis_id = ''
-                    chassis_id_bytes = list(str(packet))[17:23]
-
-                    for chassis_obj in chassis_id_bytes:
-                        chassis_byte = str(chassis_obj.encode('hex'))
-                        chassis_id += '{}:'.format(str(chassis_obj.encode('hex')))
-
-                    chassis_id_mac = chassis_id.rstrip(':')
-
-                    # Get LLDP System Name
-                    if '\x0a' in raw_packet:
-
-                        system_name_start = raw_packet.index('\x0a')
-                        system_name_list = raw_packet[(system_name_start + 2):]
-                        system_name = ''.join(system_name_list).rsplit('\x0c')[0]
-
-                        hostname = system_name
-
-                    if '\x0c' in raw_packet:
-                    # Get LLDP System Description
-
-                        system_description_start = raw_packet.index('\x0c')
-                        system_description_list = raw_packet[(system_description_start + 2):]
-                        system_description = ''.join(system_description_list).rsplit('\x0e')[0].rsplit('\x08')[0]
-
-                    if '\x0e' in raw_packet:
-                    # Get LLDP Management Address
-
-                        mgt_addr_type_index = raw_packet.index('\x10')
-                        mgt_addr_type = raw_packet[(mgt_addr_type_index + 3)]
-
-                        if mgt_addr_type == '\x06':
-                            mgt_address_type = '802 Media'
-                            mgt_addr_start = list(''.join(system_description_list).rsplit('\x0e')[-1:][0][2:8])
-                            mgt_802_addr = ''
-
-                            for mgt in mgt_addr_start:
-                                mgt_obj = mgt.encode('hex')
-                                mgt_802_addr += '{}.'.format(mgt_obj)
-
-                            mgt_802 = mgt_802_addr.rstrip('.')
-
-                        if mgt_addr_type == '\x01':
-                            mgt_address_type = 'IPv4'
-                            mgt_addr_start = raw_packet[(mgt_addr_type_index + 4):(mgt_addr_type_index + 8)]
-                            mgt_addr_list = []
-#                            mgt_addr_start = list(''.join(system_description_list).rsplit('\x0e')[1].split()[1][2:])[0:4]
-
-
-                            for mgt in mgt_addr_start:
-                                octet = int(mgt.encode('hex'), 16)
-                                mgt_addr_list.append(str(octet))
-
-                                mgt_ipv4 = '.'.join(mgt_addr_list)
-
-                            # Parse LLDP Telecommunications data / TR-41 data (could also potentially be repeated system name)
-                        if '\xfe' in raw_packet and mgt_addr_type == '\x01':
-
-                            teledata_start = raw_packet.index('\xfe')
-                            teledata_list = ''.join(raw_packet[teledata_start:]).lstrip('\xfe').split('\xfe')[1::]
-
-                            if len(teledata_list) == 4:
-
-                                media_capabilities = teledata_list[0]
-                                network_policy = teledata_list[1]
-                                location_identification = teledata_list[2]
-                                extended_power = teledata_list[3]
-
-
-                                country = location_identification[8:10]
-                                state = location_identification[12:14]
-                                city = ''.join(location_identification[16:]).rsplit('\x06')[0]
-                                street = ''.join(location_identification[16:]).rsplit('\x06')[1].rsplit('\x13')[0].strip()
-                                number = ''.join(location_identification[16:]).rsplit('\x06')[1].split('\x13')[1][1:5].strip()
-                                unit = location_identification[-3:]
-
-                                address = '{} {} {} - {}, {} - {}'.format(number, street, unit, city, state, country)
-
-
-                    if hostname not in self.keys['hosts'].keys():
-                        self.keys['hosts'].update({hostname:{'mac': mac, 'mgt_address_type': mgt_address_type, 'chassis_id': chassis_id_mac, 'fingerprints': system_description, 'management_ipv4': mgt_ipv4, 'system_name': system_name, 'tr-41-location-id': address, 'protocol': 'LLDP'}})
-
-        return self.keys
-
-class BootStrap:
-
-    def __init__(self, data, keys):
-
-        self.data = data
-        self.keys = keys
-
-    def search(self):
-
-        sessions = self.data.sessions()
-
-        for session in sessions:
-
-            for packet in sessions[session]:
-
-                if packet.getlayer(IP) and packet.getlayer(BOOTP):
-                    raw_packet = list(str(packet[BOOTP]))
-
-                    if raw_packet[0] == '\x01':
-
-                        if raw_packet[254:][0] == '\xc0':
-                            hostname = ''.join(raw_packet[260:]).rsplit('Q')[0].strip()
-                            fqdn = ''.join(raw_packet[270:]).replace('\x00', '^').split('^').pop().rsplit('<')[0].strip()
-
-                        else:
-                            hostname = ''.join(raw_packet[254:]).rsplit('<')[0].rsplit('Q')[0].strip()
-                            fqdn = None
-
-                        if hostname not in self.keys['hosts'].keys():
-                            mac = packet[Ether].src
-                            ipv4 = packet[IP].src
-
-                            self.keys['hosts'].update({hostname:{'mac': mac, 'fqdn': fqdn, 'ipv4': ipv4, 'protocol': 'DHCPv4 Bootstrap Request'}})
-
-                    else:
-
-                        dhcp_id_list = []
-                        router_list = []
-                        dns_list = []
-                        dns_addr_length = int(raw_packet[256].encode('hex'), 16)
-                        dns_addr_count = dns_addr_length / 4
-
-                        dhcp_srv_split = list(raw_packet[245:249])
-                        router_split = list(raw_packet[251:255])
-                        dns_split = list(raw_packet[257:(257 + dns_addr_length)])
-                        dns_count = 0
-
-                        for dhcp in dhcp_srv_split:
-                            octet = int(dhcp.encode('hex'), 16)
-                            dhcp_id_list.append(str(octet))
-
-                        for router in router_split:
-                            octet = int(router.encode('hex'), 16)
-                            router_list.append(str(octet))
-
-                        for dns in dns_split:
-                            octet = int(dns.encode('hex'), 16)
-                            dns_list.append(str(octet))
-                            dns_count += 1
-
-                            if dns_count == (dns_addr_length / dns_addr_count):
-                                dns_list.append(',')
-
-                        dhcp_srv_id = '.'.join(dhcp_id_list)
-                        router_addr = '.'.join(router_list)
-                        dns_addr_chars = '.'.join(dns_list).lstrip('.').rstrip('.')
-                        dns_addrs = sorted(list(set(dns_addr_chars.split('.,.'))))
-
-                        mac = packet[Ether].src
-                        ipv4 = packet[IP].src
-                        hostname = 'Router-{}'.format(ipv4)
-
-                        self.keys['hosts'].update({hostname:{'mac': mac, 'router': router_addr, 'dhcp': dhcp_srv_id, 'dns': dns_addrs, 'ipv4': ipv4, 'protocol': 'DHCPv4 Bootstrap Acknowledgment'}})
-
-        return self.keys
-
-def pcap_traffic_summary(pcap_buf):
-
-    pass
 
 def create_report(rname, rkeys, quiet=False):
 
@@ -435,6 +146,7 @@ def main():
         print '[*] Reading PCAP file: {}...\n'.format(pcap)
         pcap_buf = rdpcap(pcap)
 
+        #CDP(pcap_buf, recon_keys).search()
         print '  - Searching for LLDP information...'
         lldp_info = LLDP(pcap_buf, recon_keys).search()
 
@@ -446,7 +158,6 @@ def main():
 
         print '  - Searching for Windows Browser information...'
         win_browse_info = WinBrowser(pcap_buf, recon_keys).search()
-
 
         if report:
             create_report(report, win_browse_info, quiet=quiet)
