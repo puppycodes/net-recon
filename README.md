@@ -12,7 +12,10 @@
 ## Supported Protocols and Data Types
 
 * Link Local Discovery Protocol (Supported, PoC code)
-  - Network switches, potentially including full fingerprints and management addresses
+  - Network switch system names
+  - Network switch system fingerprints
+  - Network switch management addresses
+  - TR-41 Commitee Location Identification
 
 * Microsoft Windows Browser Protocol (Supported, PoC code)
   - Hostnames
@@ -25,6 +28,12 @@
   - Router IP Address
   - Domain Name Server Addresses
   - Hostnames    
+
+* Cisco Discovery Protocol (CDP)
+  -
+  -
+  -
+  -
 
 ## Protocols and Data Types Currently In Progress
 
@@ -48,6 +57,12 @@
 
     ./net-recon.py --pcap <pcap_file_path>
 
+## PCAP Files
+
+* Included with net-recon are several sample PCAP files for related protocols from Wireshark.
+  They can be found in the "pcaps" folder.
+
 ## Todo
 
 * Add live interface packet capture support
+
