@@ -1,8 +1,25 @@
-# net-recon
+    ==============================================================================
+    
+    888b    888          888         8888888b.                                    
+    8888b   888          888         888   Y88b                                   
+    8CDP8b  888          888         888    888                                   
+    888Y88b 888  .d88b.  888888      888   d88P .d88b.   .d8888b .d88b.  8DHCPb.  
+    888 Y88b888 d8P  Y8b 888         8888888P" d8P  Y8b d88P"   d88""88b 888 "88b 
+    888  Y8WIN8 8BROWSER 888  8STFU8 888 T88b  888LLDP8 888     888  888 888  888 
+    888   Y8888 Y8b.     Y88b.       888  T88b Y8b.     Y88b.   Y88..88P 888  888 
+    888    Y888  "Y8888   "Y888      888   T88b "Y8888   "Y88888 "Y88P"  888  888
+    
+     [ Network segment reconnaissance using discovery and broadcast protocols ]
+                                [ Written by k0fin ]
+
+    ------------------------------------------------------------------------------
+    ==============================================================================
+
+# Net-Recon | Written by k0fin | Tested and Supported on Kali Linux
 
 ## About
 
-* net-recon is a tool written to perform information gathering on internal networks.
+* Net-Recon is a tool written to perform information gathering on internal networks.
 * Since net-recon utilizes host-discovery and broadcast-related protocols, information which may be valuable to an attacker
   can be obtained without ever actively scanning or querying a host.
 
