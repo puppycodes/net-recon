@@ -54,10 +54,16 @@ class WinBrowser:
                         mac = packet[Ether].src
                         ipv4 = packet[IP].src
                         domain = ''.join(raw_packet[92:]).rsplit('\x00')[0].strip()
+                        win_major = int(raw_packet[108].encode('hex'), 16)
+                        win_minor = int(raw_packet[109].encode('hex'), 16)
+
+                        windows_major_minor = '{}.{}'.format(win_major, win_minor)
+#                        print windows_major_minor
+#                        sys.exit()
                         hostname = ''.join(raw_packet[118:]).rstrip('\x00')
 
                         if hostname not in self.keys['hosts'].keys():
-                            self.keys['hosts'].update({hostname:{'announcement': announcement, 'mac': mac, 'ipv4': ipv4, 'domain': domain, 'protocol': 'Windows Browser Protocol'}})
+                            self.keys['hosts'].update({hostname:{'announcement': announcement, 'mac': mac, 'ipv4': ipv4, 'domain': domain, 'protocol': 'Windows Browser Protocol', 'windows_version': windows_major_minor}})
 
                         else:
                             if 'domain' not in self.keys['hosts'][hostname].keys():

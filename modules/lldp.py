@@ -23,7 +23,7 @@ class LLDP:
 
             for packet in sessions[session]:
 
-                if packet.getlayer(Ether) and packet[Ether].dst == "01:80:c2:00:00:0e":
+                if packet.getlayer(Ether) and (packet[Ether].dst == "01:80:c2:00:00:0e" or packet[Ether].dst == "01:80:c2:00:00:03" or packet[Ether].dst == "01:80:c2:00:00:00"):
                     # Get source MAC and build list of bytes from packet
                     mac = packet[Ether].src
                     raw_packet = list(str(packet[Raw]))

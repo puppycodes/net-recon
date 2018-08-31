@@ -146,7 +146,9 @@ def main():
         print '[*] Reading PCAP file: {}...\n'.format(pcap)
         pcap_buf = rdpcap(pcap)
 
-        #CDP(pcap_buf, recon_keys).search()
+        print '  - Searching for CDP information...'
+        cdp_info = CDP(pcap_buf, recon_keys).search()
+
         print '  - Searching for LLDP information...'
         lldp_info = LLDP(pcap_buf, recon_keys).search()
 
