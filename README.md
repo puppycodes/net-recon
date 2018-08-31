@@ -27,7 +27,7 @@
   - DHCP Server IP Address
   - Router IP Address
   - Domain Name Server Addresses
-  - Hostnames    
+  - Hostnames
 
 * Cisco Discovery Protocol
   - CDP Checksum
