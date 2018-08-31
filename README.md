@@ -11,29 +11,29 @@
 
 ## Supported Protocols and Data Types
 
-* Link Local Discovery Protocol (Supported, PoC code)
+* Link Local Discovery Protocol
   - Network switch system names
   - Network switch system fingerprints
   - Network switch management addresses
   - TR-41 Commitee Location Identification
 
-* Microsoft Windows Browser Protocol (Supported, PoC code)
+* Microsoft Windows Browser Protocol (Host, Domain/Workgroup, and Local Master Browser Announcements)
   - Hostnames
   - Windows OS Version
   - Server Type
   - Host Comment (reveals potentially sensitive information / service fingerprints)
 
-* DHCPv4 Bootstrap (Supported, PoC code)
+* DHCPv4 Bootstrap
   - DHCP Server IP Address
   - Router IP Address
   - Domain Name Server Addresses
   - Hostnames    
 
-* Cisco Discovery Protocol (CDP)
-  -
-  -
-  -
-  -
+* Cisco Discovery Protocol
+  - CDP Checksum
+  - CDP Device Name / ID
+  - CDP Device ID Type
+  - CDP Version
 
 ## Protocols and Data Types Currently In Progress
 
