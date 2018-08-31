@@ -40,6 +40,7 @@ from modules.lldp import *
 from modules.cdp import *
 from modules.mdns import *
 from modules.dhcp import *
+from modules.nbns import *
 
 from scapy.all import *
 from scapy.utils import *
@@ -58,6 +59,10 @@ def banner():
         print bfile.read().strip()
 
     print ''
+
+def encode_packet_data():
+
+    pass
 
 def create_report(rname, rkeys, quiet=False):
 
@@ -98,8 +103,12 @@ def create_report(rname, rkeys, quiet=False):
     print '-' * 100
 '''
 
-    print '-' * 100
+    print '=' * 100
     print 'Net-Recon Results'
+    print '=' * 100
+
+    print '-' * 100
+    print 'Hosts'
     print '-' * 100
     for host in hosts:
 
@@ -124,6 +133,26 @@ def create_report(rname, rkeys, quiet=False):
         print ''
 
     print ''
+
+    print '-' * 100
+    print 'Domains'
+    print '-' * 100
+    for dom in doms:
+        if not quiet:
+            print dom.upper()
+
+        domlist.append(dom)
+
+        domdatajson = domjson[dom]
+        dom_data_keys = domdatajson.keys()
+
+        for dom_data_key in dom_data_keys:
+
+            if not quiet:
+                print '  - {} {}'.format(dom_data_key.upper(), domdatajson[dom_data_key])
+
+        print ''
+
 #    print '[*] Done! Report written to outfile: {}'.format(rname)
 
 def main():
@@ -143,8 +172,11 @@ def main():
     if pcap:
         recon_keys = {'hosts':{}, 'domains':{}}
 
-        print '[*] Reading PCAP file: {}...\n'.format(pcap)
+        print '[*] Loading network packets from PCAP file: {}...\n'.format(pcap)
         pcap_buf = rdpcap(pcap)
+
+        print '  - Searching for NBT-NS information...'
+        nbns_info = NBNS(pcap_buf, recon_keys).search()
 
         print '  - Searching for CDP information...'
         cdp_info = CDP(pcap_buf, recon_keys).search()

@@ -33,8 +33,6 @@ class MDNS:
                         domain = None
 
                     if domain != None and domain not in self.keys['domains'].keys():
-                        self.keys['domains'].update({domain: {'protocol': 'mdns', 'client_ipv4': packet[IP].src}})
+                        self.keys['domains'].update({domain: {'protocol': 'mDNS', 'client_ipv4': packet[IP].src}})
 
         return self.keys
-
-

@@ -35,13 +35,16 @@
   - CDP Device ID Type
   - CDP Version
 
-## Protocols and Data Types Currently In Progress
-
 * MDNS
   - Internal domain names
   - Lookup types
 
-## Future Protocols and Data Types From Poisoning Attacks
+* NetBIOS Name Service
+  - NetBIOS names
+  - Source MAC and IPv4 Addresses
+  - NBNS Transaction ID's
+
+## Protocols and Data Types Currently In Progress
 
 * SMB Session Setup AndX Response
 * Kerberos
