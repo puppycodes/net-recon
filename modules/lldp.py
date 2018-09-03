@@ -117,7 +117,8 @@ class LLDP:
 
 
                     if hostname not in self.keys['hosts'].keys():
-                        self.keys['hosts'].update({hostname:{'mac': mac, 'mgt_address_type': mgt_address_type, 'chassis_id': chassis_id_mac, 'fingerprints': system_description, 'management_ipv4': mgt_ipv4, 'system_name': system_name, 'tr-41-location-id': address, 'protocol': 'LLDP'}})
+                        self.keys['hosts'].update({hostname:{'mac': mac, 'mgt_address_type': mgt_address_type, 'chassis_id': chassis_id_mac, 'fingerprints': system_description, 'management_ipv4': mgt_ipv4, 'system_name': system_name, 'tr-41-location-id': address, 'protocol': 'LLDP', 'device-types': ['router','switch','firewall']}})
+
 
         return self.keys
 

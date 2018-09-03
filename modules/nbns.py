@@ -44,11 +44,17 @@ class NBNS:
                     mac = packet[Ether].src
                     ipv4 = packet[IP].src
                     hostname = 'NBNS-Source-{}'.format(ipv4)
+                    sport = packet[UDP].sport
+                    dport = packet[UDP].dport
 
                     transaction_id = list(raw_packet[0:2])
                     flags = list(raw_packet[2:4])
-                    questions = list(raw_packet[4:6])
-                    answers = list(raw_packet[6:8])
+                    questions = ''.join(list(raw_packet[4:6])).encode('hex')
+                    answers = ''.join(list(raw_packet[6:8])).encode('hex')
+
+#                    print 'Questions: {}'.format(questions)
+#                    print 'Answers: {}'.format(answers)
+
                     nbns_name = ''.join(raw_packet[13:len(raw_packet) - 5])
                     nbns_query_name = decode_nbns_name(nbns_name).split(' ')[0].strip()
 
@@ -65,7 +71,10 @@ class NBNS:
 #                    print answers
 
                     if hostname != None and hostname not in self.keys['hosts'].keys():
-                        self.keys['hosts'].update({hostname: {'protocol': 'NBNS', 'ipv4': ipv4, 'mac': mac, 'nbns_query_name': nbns_query_name}})
+                        self.keys['hosts'].update({hostname: {'protocol': 'NBNS', 'ipv4': ipv4, 'mac': mac, 'nbns_query_name': nbns_query_name, 'sport': sport, 'dport': dport}})
+
+                    else:
+                        pass
 
         return self.keys
 

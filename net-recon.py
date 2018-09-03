@@ -41,6 +41,7 @@ from modules.cdp import *
 from modules.mdns import *
 from modules.dhcp import *
 from modules.nbns import *
+from modules.console import *
 
 from scapy.all import *
 from scapy.utils import *
@@ -59,10 +60,6 @@ def banner():
         print bfile.read().strip()
 
     print ''
-
-def encode_packet_data():
-
-    pass
 
 def create_report(rname, rkeys, quiet=False):
 
@@ -160,20 +157,21 @@ def main():
     parser = ArgumentParser(description='A tool for parsing network/Active Directory information from packet captures')
 
     parser.add_argument('--pcap', help='Packet capture to read from')
-    parser.add_argument('--quiet', action='store_true', default=False, help='Collect information from PCAP file, save to a report and exit without output.')
-    parser.add_argument('--report', default='{}/net-recon-test-report.nrr', help='Create a report of discovered information to a specified output filename')
+    parser.add_argument('--session', default=False, help='Load a previously generated Net-Recon session file (filename.nrecon)')
 
     args = parser.parse_args()
 
     pcap = args.pcap
-    quiet = args.quiet
-    report = args.report
+    session = args.session
 
     if pcap:
-        recon_keys = {'hosts':{}, 'domains':{}}
+        loadfile = pcap
+        sessionfile = '{}net-recon-session-{}'.format('{}/sessions/'.format(os.getcwd()), loadfile.split('/').pop().rsplit('.pcap')[0].strip())
 
-        print '[*] Loading network packets from PCAP file: {}...\n'.format(pcap)
-        pcap_buf = rdpcap(pcap)
+        recon_keys = {'hosts':{}, 'domains':{}, 'protocols':{}}
+
+        print '[*] Loading network packets from PCAP file: {}...\n'.format(loadfile)
+        pcap_buf = rdpcap(loadfile)
 
         print '  - Searching for NBT-NS information...'
         nbns_info = NBNS(pcap_buf, recon_keys).search()
@@ -193,8 +191,15 @@ def main():
         print '  - Searching for Windows Browser information...'
         win_browse_info = WinBrowser(pcap_buf, recon_keys).search()
 
-        if report:
-            create_report(report, win_browse_info, quiet=quiet)
+        net_recon_shell(sessionfile, win_browse_info)
+
+    elif session:
+
+        sessionfile = session
+        load_file, load_keys = session_handler(sfile=sessionfile)
+
+        net_recon_shell(load_file, load_keys)
+
 
 if __name__ == '__main__':
 

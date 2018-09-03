@@ -24,14 +24,21 @@ class WinBrowser:
             for packet in sessions[session]:
 
                 if packet.getlayer(UDP) and packet[UDP].sport == 138 and packet[UDP].dport == 138:
+
+                    sport = '138'
+                    dport = '138'
+
                     raw_packet = list(str(packet[Raw]))
                     browser_cmd = raw_packet[85:87]
 
                     if browser_cmd[1] == '\x01':
 
-                        announcement = 'Host Announcement (0x01)'
                         mac = packet[Ether].src
                         ipv4 = packet[IP].src
+
+                        announcement = 'Host Announcement'
+                        announcement_code = '0x01'
+
                         hostname = ''.join(raw_packet[92:]).rsplit('\x00')[0].strip()
 
                         if list(raw_packet[108:110])[0] == '\x06' and list(raw_packet[108:110])[1] == '\x01':
@@ -41,16 +48,17 @@ class WinBrowser:
                             os = None
 
                         if hostname not in self.keys['hosts'].keys():
-                            self.keys['hosts'].update({hostname:{'announcement': announcement, 'mac': mac, 'ipv4': ipv4, 'os': os, 'protocol': 'Windows Browser Protocol'}})
+                            self.keys['hosts'].update({hostname:{'announcement': announcement, 'mac': mac, 'ipv4': ipv4, 'sport': sport, 'dport': dport, 'os': os, 'protocol': 'Windows Browser Protocol'}})
 
                         else:
-
                             if 'os' not in self.keys['hosts'][hostname].keys():
                                 self.keys['hosts'][hostname].update({'os':os})
 
                     elif browser_cmd[1] == '\x0c':
 
-                        announcement = 'Domain/Workgroup Announcement (0x0c)'
+                        announcement = 'Domain/Workgroup Announcement'
+                        announcement_code = '0x0c'
+
                         mac = packet[Ether].src
                         ipv4 = packet[IP].src
                         domain = ''.join(raw_packet[92:]).rsplit('\x00')[0].strip()
@@ -58,28 +66,33 @@ class WinBrowser:
                         win_minor = int(raw_packet[109].encode('hex'), 16)
 
                         windows_major_minor = '{}.{}'.format(win_major, win_minor)
-#                        print windows_major_minor
-#                        sys.exit()
                         hostname = ''.join(raw_packet[118:]).rstrip('\x00')
 
                         if hostname not in self.keys['hosts'].keys():
-                            self.keys['hosts'].update({hostname:{'announcement': announcement, 'mac': mac, 'ipv4': ipv4, 'domain': domain, 'protocol': 'Windows Browser Protocol', 'windows_version': windows_major_minor}})
+                            self.keys['hosts'].update({hostname:{'announcement': announcement, 'announcement_code': announcement_code, 'mac': mac, 'ipv4': ipv4, 'domain': domain, 'protocol': 'Windows Browser Protocol', 'windows_version': windows_major_minor}})
 
                         else:
                             if 'domain' not in self.keys['hosts'][hostname].keys():
                                 self.keys['hosts'][hostname].update({'domain': domain})
 
-                        if domain not in self.keys['domains'].keys():
+                            if windows_major_minor not in self.keys['hosts'][hostname].keys():
+                                self.keys['hosts'][hostname].update({'windows_version': windows_major_minor})
+
+
+                        if domain not in self.keys['domains'].keys() and domain not in self.keys['hosts'][hostname].keys():
                             self.keys['domains'].update({domain:{'protocol': 'Windows Browser Protocol'}})
 
 
                     elif browser_cmd[1] == '\x0f':
 
-                        announcement = 'Local Master Announcement (0x0f)'
+                        announcement = 'Local Master Announcement'
+                        announcement_code = '0x0f'
+
                         mac = packet[Ether].src
                         ipv4 = packet[IP].src
                         hostname = ''.join(raw_packet[92:]).rsplit('\x00')[0].strip()
                         comment = None
+
                         if raw_packet[118:] != ['\x00']:
                             comment = ''.join(raw_packet[118:]).strip()
 

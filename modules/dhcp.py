@@ -39,8 +39,10 @@ class BootStrap:
                         if hostname not in self.keys['hosts'].keys():
                             mac = packet[Ether].src
                             ipv4 = packet[IP].src
+                            self.keys['hosts'].update({hostname:{'mac': mac, 'fqdn': fqdn, 'ipv4': ipv4, 'protocol': 'DHCPv4/BOOTP_REQ'}})
 
-                            self.keys['hosts'].update({hostname:{'mac': mac, 'fqdn': fqdn, 'ipv4': ipv4, 'protocol': 'DHCPv4 Bootstrap Request'}})
+                        else:
+                            self.keys['hosts'][hostname].update({hostname:{'fqdn': fqdn}})
 
                     else:
 
@@ -78,9 +80,20 @@ class BootStrap:
 
                         mac = packet[Ether].src
                         ipv4 = packet[IP].src
-                        hostname = 'Router-{}'.format(ipv4)
+                        hostname = 'RTR{}'.format(mac.replace(':',''))
 
-                        self.keys['hosts'].update({hostname:{'mac': mac, 'router': router_addr, 'dhcp': dhcp_srv_id, 'dns': dns_addrs, 'ipv4': ipv4, 'protocol': 'DHCPv4 Bootstrap Acknowledgment'}})
+                        if hostname not in self.keys['hosts'].keys():
+                            self.keys['hosts'].update({hostname:{'mac': mac, 'router': router_addr, 'dhcp': dhcp_srv_id, 'dns': dns_addrs, 'ipv4': ipv4, 'protocol': 'DHCPv4/BOOTP_ACK'}})
+
+                        else:
+                            if 'router' not in self.keys['hosts'][hostname].keys():
+                                self.keys['hosts'][hostname].update({'router': router_addr})
+
+                            if 'dhcp' not in self.keys['hosts'][hostname].keys():
+                                self.keys['hosts'][hostname].update({'router': router_addr})
+                                self.keys['hosts'][hostname].update({'router': router_addr})
+
+
 
         return self.keys
 
