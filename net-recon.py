@@ -166,11 +166,17 @@ def main():
 
     if pcap:
         loadfile = pcap
+        check_sessions_path = sessions_path_exists()
+
+        if not check_sessions_path:
+            os.system('mkdir {}'.format('{}/sessions'.format(os.getcwd())))
+
         sessionfile = '{}net-recon-session-{}'.format('{}/sessions/'.format(os.getcwd()), loadfile.split('/').pop().rsplit('.pcap')[0].strip())
 
-        recon_keys = {'hosts':{}, 'domains':{}, 'protocols':{}}
+        recon_keys = {'hosts':{}, 'domains':{}, 'protocols':{}, 'routers':{}}
 
-        print '[*] Loading network packets from PCAP file: {}...\n'.format(loadfile)
+        print ColorOut('Loading network packets from PCAP file: {}...\n'.format(loadfile)).blue()
+
         pcap_buf = rdpcap(loadfile)
 
         print '  - Searching for NBT-NS information...'
@@ -193,7 +199,7 @@ def main():
 
         net_recon_shell(sessionfile, win_browse_info)
 
-    elif session:
+    if session:
 
         sessionfile = session
         load_file, load_keys = session_handler(sfile=sessionfile)

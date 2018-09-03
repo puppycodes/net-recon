@@ -158,7 +158,7 @@ Type "help <command>" for more help.
 
         if self.parselen == 3:
 
-            if self.cmdstr.split()[1] in keys:
+            if self.cmdstr.split()[1] in keys.keys():
 
                 if keys[self.cmdstr.split()[1]] != {}:
                     subkeylist = keys[self.cmdstr.split()[1]].keys()

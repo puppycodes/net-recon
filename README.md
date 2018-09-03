@@ -1,6 +1,6 @@
-# Net-Recon | Written by k0fin | Tested and Supported on Kali Linux
+# Net-Recon
 
-![Net-Recon Console Menu](<img_path> "Net-Recon Console Menu")
+![Net-Recon Console Menu](./screenshots/net-recon-main.jpg "Net-Recon Console Menu")
 
 ## About
 

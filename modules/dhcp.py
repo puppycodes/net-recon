@@ -80,18 +80,16 @@ class BootStrap:
 
                         mac = packet[Ether].src
                         ipv4 = packet[IP].src
-                        hostname = 'RTR{}'.format(mac.replace(':',''))
 
-                        if hostname not in self.keys['hosts'].keys():
-                            self.keys['hosts'].update({hostname:{'mac': mac, 'router': router_addr, 'dhcp': dhcp_srv_id, 'dns': dns_addrs, 'ipv4': ipv4, 'protocol': 'DHCPv4/BOOTP_ACK'}})
+                        if router_addr not in self.keys['routers'].keys():
+                            self.keys['routers'].update({router_addr:{'mac': mac, 'router': router_addr, 'dhcp': dhcp_srv_id, 'dns': dns_addrs, 'ipv4': ipv4, 'protocol': 'DHCPv4/BOOTP_ACK'}})
 
                         else:
                             if 'router' not in self.keys['hosts'][hostname].keys():
                                 self.keys['hosts'][hostname].update({'router': router_addr})
 
                             if 'dhcp' not in self.keys['hosts'][hostname].keys():
-                                self.keys['hosts'][hostname].update({'router': router_addr})
-                                self.keys['hosts'][hostname].update({'router': router_addr})
+                                self.keys['hosts'][hostname].update({'dhcp': dhcp_srv_id})
 
 
 
