@@ -8,6 +8,9 @@ import json
 import readline
 import subprocess
 
+from scapy.all import *
+from scapy.utils import *
+
 from datetime import date
 
 class ColorOut:
@@ -38,8 +41,7 @@ class NetReconHelp:
 
             except AttributeError, err:
 
-                print ColorOut('NetRecon command not found.').red()
-                print self.cmdstr
+                pass
 
         else:
 
@@ -49,8 +51,7 @@ class NetReconHelp:
 
             except AttributeError, err:
 
-                print ColorOut('NetRecon command not found.').red()
-                print self.cmdstr
+                pass
 
     def capture(self):
 
@@ -121,16 +122,29 @@ class NetReconConsole:
 
         self.cmdstr = cmdstr
         self.keys = keys
-        self.parselen = len(cmdstr.split())
+        self.parselen = len(self.cmdstr.split())
 
-        try:
-            runcmd = getattr(self, self.cmdstr.split()[0].strip())
-            runcmd(self.keys)
+        if self.parselen > 1:
 
-        except AttributeError, err:
+            try:
+                runcmd = getattr(self, self.cmdstr.split()[0])
+                runcmd(self.keys)
 
-            print ColorOut('NetRecon command not found. CONSOLE').red()
-            print self.cmdstr
+            except AttributeError, err:
+
+                print ColorOut('NetRecon command not found. (CONSOLE)').red()
+                print self.cmdstr.split()[0].strip()
+
+        if self.parselen == 1:
+
+            try:
+                runcmd = getattr(self, self.cmdstr)
+                runcmd(self.keys)
+
+            except AttributeError, err:
+
+                print ColorOut('NetRecon command not found (CONSOLE-2).').red()
+                print self.cmdstr
 
     def help(self, keys):
 
@@ -270,21 +284,35 @@ Type "help <command>" for more help.
 
     def search(self, keys):
 
-        if self.parselen == 3:
+        if self.parselen >= 2:
             index = self.cmdstr.split()[1].strip()
             query = self.cmdstr.split()[2].strip()
 
-            for host in keys['hosts'].keys():
-                hostkeys = keys['hosts'][host].keys()
+            if index in keys.keys():
+                if query.lower() in keys[index].keys():
+                    print "Found! "
+                    ikeys = keys[index][query.lower()].keys()
 
-                if index in hostkeys:
-                    selected = keys['hosts'][host][index]
+                    for ikey in ikeys:
+                        print ikey, keys[index][query.lower()][ikey]
 
-                    if query == selected:
-                        print "Found! "
+                if query.upper() in keys[index].keys():
+                    print "Found!"
+                    ikeys = keys[index][query.upper()].keys()
 
-                        for k in keys['hosts'][host]:
-                            print '{0:15} {1:2} {2:2}'.format(k, '-', keys['hosts'][host][k])
+                    for ikey in ikeys:
+                        print ikey, keys[index][query.upper()][ikey]
+
+            else:
+                for rkey in keys.keys():
+                    r_keybuf = keys[rkey].keys()
+                    for r_obj in r_keybuf:
+                        obj_keybuf = keys[rkey][r_obj].keys()
+                        if index.lower() in obj_keybuf:
+                            select_obj = keys[rkey][r_obj][index.lower()]
+                            if query in [select_obj]:
+                                 for k in keys[rkey][r_obj].keys():
+                                     print k, keys[rkey][r_obj][k]
 
     def capture(self, keys):
 
@@ -294,8 +322,13 @@ Type "help <command>" for more help.
             if self.cmdstr.split()[1].strip() in interfaces:
                 print ColorOut('Starting packet capture on network interface: {}...'.format(self.cmdstr.split()[1].strip())).blue()
 
+                sniff(iface=self.cmdstr.split()[1].strip(), prn=pkt_callback, store=0)
+
         else:
             NetReconHelp(self.cmdstr.split()[0].strip())
+
+def pkt_callback(pkt):
+    pkt.show() # debug statement
 
 def detect_interfaces():
 
@@ -338,7 +371,7 @@ def history_check():
     '''Function to check if a CLI history
        file for NetRecon exists'''
     filepath = '/opt/net-recon/.net-recon_history/*'
-    if len(glob.glob(filepath)) == 0:
+    if len(glob(filepath)) == 0:
         return False
 
     else:
@@ -361,7 +394,7 @@ def saved_sessions():
     savedkeys = {}
     savecount = 1
     sessions = '{}/sessions/'.format(os.getcwd())
-    index = glob.glob('{}*'.format(sessions))
+    index = glob('{}*'.format(sessions))
 
     for i in index:
         savedkeys.update({savecount: i})
@@ -371,7 +404,9 @@ def saved_sessions():
 
 def sessions_path_exists():
 
-    index = glob.glob("{}/sessions".format(os.getcwd()))
+    sessions_path = '{}/sessions'.format(os.getcwd())
+    index = glob(sessions_path)
+
     if index != []:
         return True
 
