@@ -124,10 +124,10 @@ class NetReconConsole:
         self.keys = keys
         self.parselen = len(self.cmdstr.split())
 
-        if self.parselen > 1:
+        if self.parselen >= 2:
 
             try:
-                runcmd = getattr(self, self.cmdstr.split()[0])
+                runcmd = getattr(self, self.cmdstr.split()[0].strip())
                 runcmd(self.keys)
 
             except AttributeError, err:
@@ -315,20 +315,11 @@ Type "help <command>" for more help.
                                      print k, keys[rkey][r_obj][k]
 
     def capture(self, keys):
+        interfaces = detect_interfaces()
+        NetReconSniffer('eth0', keys).sniff()
 
-        if self.parselen == 2:
-            interfaces = detect_interfaces()
-
-            if self.cmdstr.split()[1].strip() in interfaces:
-                print ColorOut('Starting packet capture on network interface: {}...'.format(self.cmdstr.split()[1].strip())).blue()
-
-                sniff(iface=self.cmdstr.split()[1].strip(), prn=pkt_callback, store=0)
-
-        else:
-            NetReconHelp(self.cmdstr.split()[0].strip())
-
-def pkt_callback(pkt):
-    pkt.show() # debug statement
+#            else:
+#                NetReconHelp(self.cmdstr)
 
 def detect_interfaces():
 
@@ -343,6 +334,24 @@ def detect_interfaces():
     iface_buf_list = iface_buf.split('\n')
 
     return sorted(list(set(iface_buf_list)))
+
+class NetReconSniffer:
+
+    def __init__(self, interface, keys):
+
+        self.interface = interface
+        self.keys = keys
+
+    def sniff(self):
+
+        sniff(iface=self.interface, prn=pkt_callback, store=0)
+
+def pkt_callback(pkt):
+
+    if pkt.getlayer(UDP):
+        raw_packet = list(str(pkt[UDP]))
+
+        return raw_packet
 
 def banner():
 
