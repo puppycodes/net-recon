@@ -1,6 +1,6 @@
 # Net-Recon
 
-![Net-Recon Console Menu](./screenshots/net-recon-main.jpg "Net-Recon Console Menu")
+![Net-Recon Console Menu](./screenshots/net-recon-main-menu.jpg "Net-Recon Console Menu")
 
 ## About
 
