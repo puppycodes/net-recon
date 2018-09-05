@@ -314,6 +314,22 @@ Type "help <command>" for more help.
                                  for k in keys[rkey][r_obj].keys():
                                      print k, keys[rkey][r_obj][k]
 
+    def build(self, keys):
+        pass
+
+
+    def save(self, keys):
+
+        print 'save ipv4 ipv4-targets.txt'
+        print 'save ports portlist.json'
+        print 'save fqdns target-fqdn-list.html'
+        print 'save routers routers.csv'
+
+    def load(self, keys):
+
+        print 'load pcap example.pcap'
+        print 'load conf net-recon.conf'
+
     def capture(self, keys):
         interfaces = detect_interfaces()
         NetReconSniffer('eth0', keys).sniff()
